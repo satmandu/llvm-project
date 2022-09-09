@@ -126,6 +126,7 @@ llvm::Error PerfEvent::MmapMetadataAndDataBuffer(size_t num_data_pages,
     return mmap_metadata_data.takeError();
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 llvm::Error PerfEvent::MmapAuxBuffer(size_t num_aux_pages) {
   if (num_aux_pages == 0)
     return Error::success();
@@ -144,6 +145,7 @@ llvm::Error PerfEvent::MmapAuxBuffer(size_t num_aux_pages) {
   } else
     return mmap_aux.takeError();
 }
+#endif
 
 llvm::Error PerfEvent::MmapMetadataAndBuffers(size_t num_data_pages,
                                               size_t num_aux_pages,
@@ -171,19 +173,24 @@ perf_event_mmap_page &PerfEvent::GetMetadataPage() const {
   return *reinterpret_cast<perf_event_mmap_page *>(m_metadata_data_base.get());
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 ArrayRef<uint8_t> PerfEvent::GetDataBuffer() const {
   perf_event_mmap_page &mmap_metadata = GetMetadataPage();
   return {reinterpret_cast<uint8_t *>(m_metadata_data_base.get()) +
               mmap_metadata.data_offset,
            static_cast<size_t>(mmap_metadata.data_size)};
 }
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 ArrayRef<uint8_t> PerfEvent::GetAuxBuffer() const {
   perf_event_mmap_page &mmap_metadata = GetMetadataPage();
   return {reinterpret_cast<uint8_t *>(m_aux_base.get()),
            static_cast<size_t>(mmap_metadata.aux_size)};
 }
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 Expected<std::vector<uint8_t>> PerfEvent::GetReadOnlyDataBuffer() {
   // The following code assumes that the protection level of the DATA page
   // is PROT_READ. If PROT_WRITE is used, then reading would require that
@@ -227,7 +234,9 @@ Expected<std::vector<uint8_t>> PerfEvent::GetReadOnlyDataBuffer() {
 
   return output;
 }
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 Expected<std::vector<uint8_t>> PerfEvent::GetReadOnlyAuxBuffer() {
   // The following code assumes that the protection level of the AUX page
   // is PROT_READ. If PROT_WRITE is used, then reading would require that
@@ -267,6 +276,7 @@ Expected<std::vector<uint8_t>> PerfEvent::GetReadOnlyAuxBuffer() {
 
   return output;
 }
+#endif
 
 Error PerfEvent::DisableWithIoctl() {
   if (!m_enabled)
@@ -296,6 +306,7 @@ Error PerfEvent::EnableWithIoctl() {
   return Error::success();
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 size_t PerfEvent::GetEffectiveDataBufferSize() const {
   perf_event_mmap_page &mmap_metadata = GetMetadataPage();
   if (mmap_metadata.data_head < mmap_metadata.data_size)
@@ -303,6 +314,7 @@ size_t PerfEvent::GetEffectiveDataBufferSize() const {
   else
     return mmap_metadata.data_size; // The buffer has wrapped.
 }
+#endif
 
 Expected<PerfEvent>
 lldb_private::process_linux::CreateContextSwitchTracePerfEvent(
