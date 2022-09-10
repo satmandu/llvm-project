@@ -12,6 +12,8 @@
 
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 
+#include <linux/version.h>
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace process_linux;
@@ -105,6 +107,7 @@ void IntelPTMultiCoreTrace::ProcessWillResume() {
   });
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 TraceIntelPTGetStateResponse IntelPTMultiCoreTrace::GetState() {
   TraceIntelPTGetStateResponse state;
   state.using_cgroup_filtering = m_using_cgroup_filtering;
@@ -126,6 +129,7 @@ TraceIntelPTGetStateResponse IntelPTMultiCoreTrace::GetState() {
 
   return state;
 }
+#endif
 
 bool IntelPTMultiCoreTrace::TracesThread(lldb::tid_t tid) const {
   // All the process' threads are being traced automatically.

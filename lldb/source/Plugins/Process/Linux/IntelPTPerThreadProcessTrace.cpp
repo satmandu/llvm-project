@@ -8,6 +8,8 @@
 
 #include "IntelPTPerThreadProcessTrace.h"
 
+#include <linux/version.h>
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace process_linux;
@@ -34,6 +36,7 @@ Error IntelPTPerThreadProcessTrace::TraceStart(lldb::tid_t tid) {
   return m_thread_traces.TraceStart(tid, m_tracing_params);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,0)
 TraceIntelPTGetStateResponse IntelPTPerThreadProcessTrace::GetState() {
   TraceIntelPTGetStateResponse state;
   m_thread_traces.ForEachThread(
@@ -44,6 +47,7 @@ TraceIntelPTGetStateResponse IntelPTPerThreadProcessTrace::GetState() {
       });
   return state;
 }
+#endif
 
 Expected<llvm::Optional<std::vector<uint8_t>>>
 IntelPTPerThreadProcessTrace::TryGetBinaryData(
